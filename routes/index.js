@@ -7,7 +7,7 @@ var crypto = require('crypto'),
     password = 'asdsiJHKJHIWRqaasd8975';
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.send(200);
 });
 
 router.get('/info', function(req, res) {
@@ -21,12 +21,10 @@ function encrypt(text){
   return crypted;
 }
 
-router.get('/login', function(req, res) {
+router.get('/login', function(req, res) { //REMEBER TO DO THINGS WITH THE changePass!
   var db = req.db;
   var collection = db.get('usercollection');
-  collection.findOne({ _id: ObjectId(req.query.id) },{},function(e,docs){
-      console.log(docs)
-      console.log("AKLSJD")
+  collection.findOne({ loginId: req.query.id },{},function(e,docs){
       if(encrypt(req.query.pass) == docs.pass) {
         res.status(200);
         req.session.loggedIn = true;
@@ -45,6 +43,114 @@ router.get('/logout', function(req, res) {
   res.send(200);
 });
 
+router.get('/createUser', function(req, res) {
+  if(req.session.loggedIn && req.session.usr.role == "admin"){
+    var db = req.db;
+    var collection = db.get('usercollection');
+    collection.insert({name: req.query.name, role: req.query.role, pass: encrypt(req.query.pass), changePass: true, loginId: req.query.loginId},function(e,docs){
+      res.send("OK");
+    });
+  }
+  else res.send(403)
+});
+
+router.get('/getUser', function(req, res) {
+  if(req.session.loggedIn){
+    var db = req.db;
+    var collection = db.get('usercollection');
+    collection.findOne({ _id: ObjectId(req.query.id) },{},function(e,docs){
+      if(req.session.usr.role !== "admin") {
+        delete docs.pass;
+        delete docs.loginId;
+        delete docs.changePass;
+      }
+      res.send(docs);
+    });
+  }
+  else res.send(403)
+});
+
+router.get('/joinEvent', function(req, res) {
+  if(req.session.loggedIn){
+    var db = req.db;
+    var collection = db.get('eventcollection');
+    collection.findOne({ _id: req.query.id },{},function(e,docs){
+        if(JSON.parse(docs.participants).length < docs.max || docs.max == 0) {
+          var save = JSON.parse(docs.participants);
+          var fresh = true;
+          save.forEach(function(entry){
+            if(entry == req.query.usrId) {
+              fresh = false;
+            }
+          })
+          if(fresh) {
+            var done = false;
+            var usrCollection = db.get('usercollection');
+            usrCollection.findOne({ _id: req.query.usrId },{},function(e,usrDocs){
+              if(e) {
+                res.send("That user doesn't exist or the database is down")
+              }
+              if(docs.toEVI == false || docs.toInnostaja == false) {
+                if(docs.toEVI && usrDocs.role !== "EVI" && usrDocs.role !== "admin") {
+                  res.send("You're not invited!")
+                }
+                if(docs.toInnostaja && usrDocs.role !== "innostaja" && usrDocs.role !== "admin") {
+                  res.send("You're not invited!")
+                }
+              }
+              else {
+                save.push(req.query.usrId);
+                if(usrDocs.role == "EVI") {
+                  collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(save) }});
+                  done = true;
+                }
+                if(usrDocs.role == "innostaja" || usrDocs.role == "admin") {
+                  var jobs = JSON.parse(docs.jobs);
+                  jobs.forEach(function(job, index){
+                    if(job.name == req.query.job) {
+                      if(job.max > job.joined.length) {
+                        var includes = false;
+                        jobs.forEach(function(job2){
+                          if(job2.joined.includes(req.query.usrId)) {
+                            includes = true;
+                          }
+                        })
+                        if(!includes) {
+                          jobs[index].joined.push(req.query.usrId);
+                          done = true;
+                        }
+                      }
+                    }
+                  });
+                  collection.update({ _id: req.query.id }, {$set: { jobs: JSON.stringify(jobs) }});
+                }
+                if(typeof usrDocs.events !== 'undefined') {
+                  var eventCache = JSON.parse(usrDocs.events)
+                }
+                else {
+                  var eventCache = new Array;
+                }
+                if(done) {
+                  eventCache.push(req.query.id);
+                  usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
+                  res.send("OK");
+                }
+                else res.send("That didn't save")
+              }
+            });
+          }
+          else {
+            res.send("You have already joined!")
+          }
+        }
+        else {
+          res.send("This event is already full!")
+        }
+    });
+  }
+  else res.send(403)
+});
+
 router.get('/getEvents', function(req, res) {
   if(req.session.loggedIn){
     var db = req.db;
@@ -52,18 +158,14 @@ router.get('/getEvents', function(req, res) {
     collection.find({}, function(e,docs){
       var temp = new Array;
       docs.forEach(function(val){
-        console.log(val.toEVI + " " + req.session.usr.role);
         if(req.session.usr.role == "EVI" && val.toEVI == "true") {
           temp.push(val);
-          console.log("EVI")
         }
         else if (req.session.usr.role == "innostaja" && val.toInnostaja) {
           temp.push(val);
-          console.log("innostaja")
         }
         else if (req.session.usr.role == "admin") {
           temp.push(val);
-          console.log("admin")
         }
       })
       res.send(temp);
@@ -73,11 +175,10 @@ router.get('/getEvents', function(req, res) {
 });
 
 router.get('/setEvent', function(req, res) {
-  console.log(req.session)
   if(req.session.loggedIn && req.session.usr.role == "admin"){
     var db = req.db;
     var collection = db.get('eventcollection');
-    collection.insert({name: req.query.name, startTime: req.query.startTime, endTime: req.query.endTime, closes: req.query.closes, location: req.query.location, toInnostaja: req.query.toInnostaja, toEVI: req.query.toEVI, toIndividual: req.query.toIndividual, max: req.query.max},function(e,docs){
+    collection.insert({name: req.query.name, startTime: req.query.startTime, endTime: req.query.endTime, closes: req.query.closes, location: req.query.location, toInnostaja: req.query.toInnostaja, toEVI: req.query.toEVI, toIndividual: req.query.toIndividual, max: req.query.max, participants: JSON.stringify(new Array), jobs: req.query.jobs},function(e,docs){
         res.send("OK");
     });
   }

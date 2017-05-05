@@ -75,77 +75,77 @@ router.get('/joinEvent', function(req, res) {
     var db = req.db;
     var collection = db.get('eventcollection');
     collection.findOne({ _id: req.query.id },{},function(e,docs){
-        if(JSON.parse(docs.participants).length < docs.max || docs.max == 0) {
-          var save = JSON.parse(docs.participants);
-          var fresh = true;
-          save.forEach(function(entry){
-            if(entry == req.query.usrId) {
-              fresh = false;
+      if(JSON.parse(docs.participants).length < docs.max || docs.max == 0) {
+        var save = JSON.parse(docs.participants);
+        var fresh = true;
+        save.forEach(function(entry){
+          if(entry == req.query.usrId) {
+            fresh = false;
+          }
+        })
+        if(fresh) {
+          var done = false;
+          var usrCollection = db.get('usercollection');
+          usrCollection.findOne({ _id: req.query.usrId },{},function(e,usrDocs){
+            if(e) {
+              res.send("That user doesn't exist or the database is down")
             }
-          })
-          if(fresh) {
-            var done = false;
-            var usrCollection = db.get('usercollection');
-            usrCollection.findOne({ _id: req.query.usrId },{},function(e,usrDocs){
-              if(e) {
-                res.send("That user doesn't exist or the database is down")
+            if(docs.toEVI == false || docs.toInnostaja == false) {
+              if(docs.toEVI && usrDocs.role !== "EVI" && usrDocs.role !== "admin") {
+                res.send("You're not invited!")
               }
-              if(docs.toEVI == false || docs.toInnostaja == false) {
-                if(docs.toEVI && usrDocs.role !== "EVI" && usrDocs.role !== "admin") {
-                  res.send("You're not invited!")
-                }
-                if(docs.toInnostaja && usrDocs.role !== "innostaja" && usrDocs.role !== "admin") {
-                  res.send("You're not invited!")
-                }
+              if(docs.toInnostaja && usrDocs.role !== "innostaja" && usrDocs.role !== "admin") {
+                res.send("You're not invited!")
               }
-              else {
-                save.push(req.query.usrId);
-                if(usrDocs.role == "EVI") {
-                  collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(save) }});
-                  done = true;
-                }
-                if(usrDocs.role == "innostaja" || usrDocs.role == "admin") {
-                  var jobs = JSON.parse(docs.jobs);
-                  jobs.forEach(function(job, index){
-                    if(job.name == req.query.job) {
-                      if(job.max > job.joined.length) {
-                        var includes = false;
-                        jobs.forEach(function(job2){
-                          if(job2.joined.includes(req.query.usrId)) {
-                            includes = true;
-                          }
-                        })
-                        if(!includes) {
-                          jobs[index].joined.push(req.query.usrId);
-                          done = true;
+            }
+            else {
+              save.push(req.query.usrId);
+              if(usrDocs.role == "EVI") {
+                collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(save) }});
+                done = true;
+              }
+              if(usrDocs.role == "innostaja" || usrDocs.role == "admin") {
+                var jobs = JSON.parse(docs.jobs);
+                jobs.forEach(function(job, index){
+                  if(job.name == req.query.job) {
+                    if(job.max > job.joined.length) {
+                      var includes = false;
+                      jobs.forEach(function(job2){
+                        if(job2.joined.includes(req.query.usrId)) {
+                          includes = true;
                         }
+                      })
+                      if(!includes) {
+                        jobs[index].joined.push(req.query.usrId);
+                        done = true;
                       }
                     }
-                  });
-                  collection.update({ _id: req.query.id }, {$set: { jobs: JSON.stringify(jobs) }});
-                }
-                if(typeof usrDocs.events !== 'undefined') {
-                  var eventCache = JSON.parse(usrDocs.events)
-                }
-                else {
-                  var eventCache = new Array;
-                }
-                if(done) {
-                  eventCache.push(req.query.id);
-                  usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
-                  res.send("OK");
-                }
-                else res.send("That didn't save")
+                  }
+                });
+                collection.update({ _id: req.query.id }, {$set: { jobs: JSON.stringify(jobs) }});
               }
-            });
-          }
-          else {
-            res.send("You have already joined!")
-          }
+              if(typeof usrDocs.events !== 'undefined') {
+                var eventCache = JSON.parse(usrDocs.events)
+              }
+              else {
+                var eventCache = new Array;
+              }
+              if(done) {
+                eventCache.push(req.query.id);
+                usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
+                res.send("OK");
+              }
+              else res.send("That didn't save")
+            }
+          });
         }
         else {
-          res.send("This event is already full!")
+          res.send("You have already joined!")
         }
+      }
+      else {
+        res.send("This event is already full!")
+      }
     });
   }
   else res.send(403)

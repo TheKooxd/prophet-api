@@ -2,6 +2,10 @@ var express = require('express');
 var router = express.Router();
 var ObjectId = require('mongodb').ObjectID;
 
+var bcrypt = require('bcrypt');
+const saltRounds = 10;
+
+
 var crypto = require('crypto'),
     algorithm = 'aes-256-ctr',
     password = 'asdsiJHKJHIWRqaasd8975';
@@ -25,16 +29,21 @@ router.get('/login', function(req, res) { //REMEBER TO DO THINGS WITH THE change
   var db = req.db;
   var collection = db.get('usercollection');
   collection.findOne({ loginId: req.query.id },{},function(e,docs){
-      if(encrypt(req.query.pass) == docs.pass) {
+    if(e) {
+      res.send(e);
+    }
+     bcrypt.compare(req.query.pass, docs.pass, function(err, cor) {
+        if(cor) {
         res.status(200);
         req.session.loggedIn = true;
         req.session.usr = docs;
-      }
-      else {
-        res.status(430);
-        req.session.loggedIn = false;
-      }
-      res.send(req.session);
+        }
+        else {
+         res.status(430);
+         req.session.loggedIn = false;
+        }
+        res.send(req.session);
+      });
   });
 });
 
@@ -47,8 +56,13 @@ router.get('/createUser', function(req, res) {
   if(req.session.loggedIn && req.session.usr.role == "admin"){
     var db = req.db;
     var collection = db.get('usercollection');
-    collection.insert({name: req.query.name, role: req.query.role, pass: encrypt(req.query.pass), changePass: true, loginId: req.query.loginId},function(e,docs){
-      res.send("OK");
+    bcrypt.hash(req.query.pass, saltRounds, function(err, hash) {
+      if(err) res.send("There was an error while hashing: " + err);
+      else {
+        collection.insert({name: req.query.name, role: req.query.role, pass: hash, changePass: true, loginId: req.query.loginId},function(e,docs){
+          res.send("OK");
+        })
+      }
     });
   }
   else res.send(403)
@@ -188,12 +202,27 @@ router.get('/setEvent', function(req, res) {
 router.get('/getEvent', function(req, res) {
   if(req.session.loggedIn){
     var db = req.db;
+    var temp = new Array;
     var collection = db.get('eventcollection');
     collection.find({ _id: req.query.id },{},function(e,docs){
-        res.send(docs);
+      docs.forEach(function(val){
+        if(req.session.usr.role == "EVI" && val.toEVI == "true") {
+          temp.push(val);
+        }
+        else if (req.session.usr.role == "innostaja" && val.toInnostaja) {
+          temp.push(val);
+        }
+        else if (req.session.usr.role == "admin") {
+          temp.push(val);
+        }
+      })
+        if(temp.length > 0) {
+          res.send(temp);
+        }
+        else res.send(403)
     });
   }
-  else res.send(403)
+  else res.send(503)
 });
 
 module.exports = router;

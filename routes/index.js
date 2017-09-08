@@ -79,7 +79,6 @@ router.get('/getUser', function(req, res) {
         delete docs.changePass;
         delete docs.events;
       }
-      res.stat
       res.status(200).send(docs);
     });
   }

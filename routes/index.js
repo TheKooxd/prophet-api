@@ -53,7 +53,7 @@ router.get('/logout', function(req, res) {
 });
 
 router.get('/createUser', function(req, res) {
-  if(req.session.loggedIn && req.session.usr.role == "admin"){
+  //if(req.session.loggedIn && req.session.usr.role == "admin"){
     var db = req.db;
     var collection = db.get('usercollection');
     bcrypt.hash(req.query.pass, saltRounds, function(err, hash) {
@@ -64,8 +64,8 @@ router.get('/createUser', function(req, res) {
         })
       }
     });
-  }
-  else res.send(403)
+  //}
+  //else res.send(403)
 });
 
 router.get('/getUser', function(req, res) {
@@ -116,40 +116,70 @@ router.get('/joinEvent', function(req, res) {
               save.push(req.query.usrId);
               if(usrDocs.role == "EVI") {
                 collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(save) }});
+                  if(typeof usrDocs.events !== 'undefined') {
+                        var eventCache = JSON.parse(usrDocs.events)
+                      }
+                      else {
+                        var eventCache = new Array;
+                      }
+                      if(done) {
+                        eventCache.push(req.query.id);
+                        usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
+                        res.send("OK");
+                      }
+                      else res.send("That didn't save")
                 done = true;
               }
               if(usrDocs.role == "innostaja" || usrDocs.role == "admin") {
-                var jobs = JSON.parse(docs.jobs);
-                jobs.forEach(function(job, index){
-                  if(job.name == req.query.job) {
-                    if(job.max > job.joined.length) {
-                      var includes = false;
-                      jobs.forEach(function(job2){
-                        if(job2.joined.includes(req.query.usrId)) {
-                          includes = true;
+                if(docs.jobs != null) {
+                  var jobs = JSON.parse(docs.jobs);
+                  jobs.forEach(function(job, index){
+                    if(job.name == req.query.job) {
+                      if(job.max > job.joined.length) {
+                        var includes = false;
+                        jobs.forEach(function(job2){
+                          if(job2.joined.includes(req.query.usrId)) {
+                            includes = true;
+                          }
+                        })
+                        if(!includes) {
+                          jobs[index].joined.push(req.query.usrId);
+                          done = true;
                         }
-                      })
-                      if(!includes) {
-                        jobs[index].joined.push(req.query.usrId);
-                        done = true;
                       }
                     }
-                  }
-                });
-                collection.update({ _id: req.query.id }, {$set: { jobs: JSON.stringify(jobs) }});
+                  });
+                  collection.update({ _id: req.query.id }, {$set: { jobs: JSON.stringify(jobs) }});
+                       if(typeof usrDocs.events !== 'undefined') {
+                        var eventCache = JSON.parse(usrDocs.events)
+                      }
+                      else {
+                        var eventCache = new Array;
+                      }
+                      if(done) {
+                        eventCache.push(req.query.id);
+                        usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
+                        res.send("OK");
+                      }
+                      else res.send("That didn't save")                 
+                }
+                else {
+                   collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(save) }});
+                      if(typeof usrDocs.events !== 'undefined') {
+                        var eventCache = JSON.parse(usrDocs.events)
+                      }
+                      else {
+                        var eventCache = new Array;
+                      }
+                      if(done) {
+                        eventCache.push(req.query.id);
+                        usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
+                        res.send("OK");
+                      }
+                      else res.send("That didn't save")
+                   done = true;
+                }
               }
-              if(typeof usrDocs.events !== 'undefined') {
-                var eventCache = JSON.parse(usrDocs.events)
-              }
-              else {
-                var eventCache = new Array;
-              }
-              if(done) {
-                eventCache.push(req.query.id);
-                usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(eventCache) }});
-                res.send("OK");
-              }
-              else res.send("That didn't save")
             }
           });
         }

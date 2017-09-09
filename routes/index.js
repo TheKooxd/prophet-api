@@ -59,11 +59,22 @@ router.get('/createUser', function(req, res) {
     bcrypt.hash(req.query.pass, saltRounds, function(err, hash) {
       if(err) res.send("There was an error while hashing: " + err);
       else {
-        collection.insert({name: req.query.name, role: req.query.role, pass: hash, changePass: true, loginId: req.query.loginId},function(e,docs){
+        collection.insert({name: req.query.name, role: req.query.role, pass: hash, changePass: true, loginId: req.query.loginId, events: JSON.stringify(new Array)},function(e,docs){
           res.send("OK");
         })
       }
     });
+  }
+  else res.send(403)
+});
+
+router.get('/deleteUser', function(req, res) {
+  if(req.session.loggedIn && req.session.usr.role == "admin"){
+    var db = req.db;
+    var collection = db.get('usercollection');
+      collection.remove({_id: ObjectId(req.query.id)}, {}, function(e, docs){
+        res.send("OK");
+      })
   }
   else res.send(403)
 });
@@ -73,13 +84,32 @@ router.get('/getUser', function(req, res) {
     var db = req.db;
     var collection = db.get('usercollection');
     collection.findOne({ _id: ObjectId(req.query.id) },{},function(e,docs){
-      if(req.session.usr.role !== "admin") {
         delete docs.pass;
+      if(req.session.usr.role !== "admin") {
         delete docs.loginId;
         delete docs.changePass;
         delete docs.events;
       }
       res.status(200).send(docs);
+    });
+  }
+  else res.send(403)
+});
+
+router.get('/getUsers', function(req, res) {
+  if(req.session.loggedIn){
+    var db = req.db;
+    var collection = db.get('usercollection');
+    collection.find({},{},function(e,docs){
+      docs.forEach(function(object, index){
+        delete docs[index].pass;
+      })
+      if(req.session.usr.role !== "admin") {
+        res.send(403);
+      }
+      else {
+        res.status(200).send(docs);
+      }
     });
   }
   else res.send(403)

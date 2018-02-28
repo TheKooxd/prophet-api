@@ -1,35 +1,35 @@
 0 info it worked if it ends with ok
-1 verbose cli [ '/home/nikolaskoh/.nvm/versions/node/v6.8.1/bin/node',
-1 verbose cli   '/home/nikolaskoh/.nvm/versions/node/v6.8.1/bin/npm',
+1 verbose cli [ '/home/nikolaskoh/.nvm/versions/node/v6.11.2/bin/node',
+1 verbose cli   '/home/nikolaskoh/.nvm/versions/node/v6.11.2/bin/npm',
 1 verbose cli   'start' ]
-2 info using npm@3.10.8
-3 info using node@v6.8.1
+2 info using npm@3.10.10
+3 info using node@v6.11.2
 4 verbose run-script [ 'prestart', 'start', 'poststart' ]
 5 info lifecycle prophet@0.0.4~prestart: prophet@0.0.4
 6 silly lifecycle prophet@0.0.4~prestart: no script for prestart, continuing
 7 info lifecycle prophet@0.0.4~start: prophet@0.0.4
 8 verbose lifecycle prophet@0.0.4~start: unsafe-perm in lifecycle true
-9 verbose lifecycle prophet@0.0.4~start: PATH: /home/nikolaskoh/.nvm/versions/node/v6.8.1/lib/node_modules/npm/bin/node-gyp-bin:/home/nikolaskoh/prophet/prophet-server/node_modules/.bin:/home/nikolaskoh/.nvm/versions/node/v6.8.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
-10 verbose lifecycle prophet@0.0.4~start: CWD: /home/nikolaskoh/prophet/prophet-server
+9 verbose lifecycle prophet@0.0.4~start: PATH: /home/nikolaskoh/.nvm/versions/node/v6.11.2/lib/node_modules/npm/bin/node-gyp-bin:/home/nikolaskoh/projects/prophet/prophet-api/node_modules/.bin:/home/nikolaskoh/.nvm/versions/node/v6.11.2/bin:/home/nikolaskoh/bin:/home/nikolaskoh/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin
+10 verbose lifecycle prophet@0.0.4~start: CWD: /home/nikolaskoh/projects/prophet/prophet-api
 11 silly lifecycle prophet@0.0.4~start: Args: [ '-c', 'node ./bin/www' ]
 12 silly lifecycle prophet@0.0.4~start: Returned: code: 1  signal: null
 13 info lifecycle prophet@0.0.4~start: Failed to exec start script
 14 verbose stack Error: prophet@0.0.4 start: `node ./bin/www`
 14 verbose stack Exit status 1
-14 verbose stack     at EventEmitter.<anonymous> (/home/nikolaskoh/.nvm/versions/node/v6.8.1/lib/node_modules/npm/lib/utils/lifecycle.js:255:16)
+14 verbose stack     at EventEmitter.<anonymous> (/home/nikolaskoh/.nvm/versions/node/v6.11.2/lib/node_modules/npm/lib/utils/lifecycle.js:255:16)
 14 verbose stack     at emitTwo (events.js:106:13)
 14 verbose stack     at EventEmitter.emit (events.js:191:7)
-14 verbose stack     at ChildProcess.<anonymous> (/home/nikolaskoh/.nvm/versions/node/v6.8.1/lib/node_modules/npm/lib/utils/spawn.js:40:14)
+14 verbose stack     at ChildProcess.<anonymous> (/home/nikolaskoh/.nvm/versions/node/v6.11.2/lib/node_modules/npm/lib/utils/spawn.js:40:14)
 14 verbose stack     at emitTwo (events.js:106:13)
 14 verbose stack     at ChildProcess.emit (events.js:191:7)
-14 verbose stack     at maybeClose (internal/child_process.js:877:16)
+14 verbose stack     at maybeClose (internal/child_process.js:891:16)
 14 verbose stack     at Process.ChildProcess._handle.onexit (internal/child_process.js:226:5)
 15 verbose pkgid prophet@0.0.4
-16 verbose cwd /home/nikolaskoh/prophet/prophet-server
-17 error Linux 4.4.0-93-generic
-18 error argv "/home/nikolaskoh/.nvm/versions/node/v6.8.1/bin/node" "/home/nikolaskoh/.nvm/versions/node/v6.8.1/bin/npm" "start"
-19 error node v6.8.1
-20 error npm  v3.10.8
+16 verbose cwd /home/nikolaskoh/projects/prophet/prophet-api
+17 error Linux 4.10.0-28-generic
+18 error argv "/home/nikolaskoh/.nvm/versions/node/v6.11.2/bin/node" "/home/nikolaskoh/.nvm/versions/node/v6.11.2/bin/npm" "start"
+19 error node v6.11.2
+20 error npm  v3.10.10
 21 error code ELIFECYCLE
 22 error prophet@0.0.4 start: `node ./bin/www`
 22 error Exit status 1

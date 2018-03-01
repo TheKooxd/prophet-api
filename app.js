@@ -4,12 +4,12 @@ var path = require('path');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var session = require('express-session');
 
 var monk = require('monk');
 var db = monk('DEVELOPMENT:DEVELOPMENT@localhost:27017/prophet'); //Mongo password is changed here!
 
-var session= require('express-session');
-
+//routes
 var index = require('./routes/index');
 var users = require('./routes/users');
 
@@ -33,10 +33,12 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// set database to requests
 app.use(function(req,res,next){
-    req.db = db;
-    next();
+  req.db = db;
+  next();
 });
+
 app.use('/', index);
 app.use('/users', users);
 

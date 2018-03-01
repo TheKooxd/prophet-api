@@ -5,9 +5,8 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var mongo = require('mongodb');
 var monk = require('monk');
-var db = monk('localhost:27017/prophet');
+var db = monk('DEVELOPMENT:DEVELOPMENT@localhost:27017/prophet'); //Mongo password is changed here!
 
 var session= require('express-session');
 

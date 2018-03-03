@@ -4,6 +4,8 @@ var _ = require('lodash')
 var bcrypt = require('bcrypt');
 var router = express.Router();
 
+var app = express();
+
 const saltRounds = 10;
 
 var crypto = require('crypto'),
@@ -41,10 +43,10 @@ router.get('/info', function(req, res) {
         req.session.usr = docs;
         res.send(req.session);
       }
-      else res.send(null)
+      else res.sendStatus(503)
     });
   }
-  else res.send(req.session);
+  else res.status(203).send(req.session);
 });
 
 router.get('/login', function(req, res) {

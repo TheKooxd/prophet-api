@@ -1,0 +1,16 @@
+[  
+  {  
+    "apikey":"test",
+    "data":{  
+      "_id":"SOMERANDOM ID THAT EXIST IN DATABASE",
+      "name":"Api User",
+      "role":"EVI",
+      "changePass":false,
+      "eventRequirements":null,
+      "loginId":"Api.User",
+      "verifiedEvents":"[]",
+      "events":"[]",
+      "reservedEvents":"[]"
+    }
+  }
+]

@@ -196,35 +196,53 @@ router.get('/deleteParticipant', function(req, res) {
           var index3 = removeUserEvents.indexOf(req.query.id);
           removeUserEvents.splice(index3, 1);
           var index = JSON.parse(docsCache.participants).indexOf(req.query.usrId);
-          docsCache = JSON.parse(docsCache.participants);
-          reservedParticipantsCache = JSON.parse(docs.reservedParticipants);
-          docsCache.splice(index,1);
-          if(reservedParticipantsCache.length > 0) {
-            usrCollection.findOne({ _id: reservedParticipantsCache[0] },{},function(e,usrDocs){
-              if(e) {
-                console.log(e);
-                res.send("That user doesn't exist or the database is down");
-              }
-              console.log(usrDocs);
-              docsCache.push(usrDocs._id);
-              var reservedEventsCache = JSON.parse(usrDocs.reservedEvents);
-              var index2 = reservedEventsCache.indexOf(req.query.id);
-              reservedEventsCache.splice(index2, 1);
-              var eventsCache = JSON.parse(usrDocs.events);
-              eventsCache.push(req.query.id);
-              console.log(reservedParticipantsCache.splice(0,1));
+
+          if(index !== -1) { // user is in participating
+            docsCache = JSON.parse(docsCache.participants);
+            reservedParticipantsCache = JSON.parse(docs.reservedParticipants);
+            docsCache.splice(index,1);
+            if(reservedParticipantsCache.length > 0) {
+              usrCollection.findOne({ _id: reservedParticipantsCache[0] },{},function(e,usrDocs){
+                if(e) {
+                  console.log(e);
+                  res.send("That user doesn't exist or the database is down");
+                }
+                console.log(usrDocs);
+                docsCache.push(usrDocs._id);
+                var reservedEventsCache = JSON.parse(usrDocs.reservedEvents);
+                var index2 = reservedEventsCache.indexOf(req.query.id);
+                reservedEventsCache.splice(index2, 1);
+                var eventsCache = JSON.parse(usrDocs.events);
+                eventsCache.push(req.query.id);
+                console.log(reservedParticipantsCache.splice(0,1));
+                collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(docsCache) }});
+                collection.update({ _id: req.query.id }, {$set: { reservedParticipants: JSON.stringify(reservedParticipantsCache.splice(0,1)) }});
+                usrCollection.update({ _id: usrDocs._id }, {$set: { reservedEvents: JSON.stringify(reservedEventsCache) }});
+                usrCollection.update({ _id: usrDocs._id }, {$set: { events: JSON.stringify(eventsCache) }});
+                usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(removeUserEvents) }});
+                res.send("removed using reserve");
+              });
+            }
+            else {
               collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(docsCache) }});
-              collection.update({ _id: req.query.id }, {$set: { reservedParticipants: JSON.stringify(reservedParticipantsCache.splice(0,1)) }});
-              usrCollection.update({ _id: usrDocs._id }, {$set: { reservedEvents: JSON.stringify(reservedEventsCache) }});
-              usrCollection.update({ _id: usrDocs._id }, {$set: { events: JSON.stringify(eventsCache) }});
               usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(removeUserEvents) }});
-              res.send("removed using reserve");
-            });
+              res.send("removed without reserve");
+            }
           }
-          else {
-            collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(docsCache) }});
-            usrCollection.update({ _id: req.query.usrId }, {$set: { events: JSON.stringify(removeUserEvents) }});
-            res.send("removed without reserve");
+          else { // user is in reserve
+            // acquire from reserve list and remove
+            index = JSON.parse(docsCache.reservedParticipants).indexOf(req.query.usrId);
+            var reservedParticipantsCache = JSON.parse(docs.reservedParticipants);
+            reservedParticipantsCache.splice(index, 1);
+
+            // remove from usr locally
+            var reservedEventsCache = JSON.parse(removedUserData.reservedEvents);
+            var index2 = reservedEventsCache.indexOf(req.query.id);
+            reservedEventsCache.splice(index2, 1);
+
+            collection.update({ _id: req.query.id }, {$set: { reservedParticipants: JSON.stringify(reservedParticipantsCache) }});
+            usrCollection.update({ _id: removedUserData._id }, {$set: { reservedEvents: JSON.stringify(reservedEventsCache) }});
+            res.send("removed from reserve");
           }
       });
       }

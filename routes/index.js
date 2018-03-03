@@ -49,13 +49,14 @@ router.get('/info', function(req, res) {
   else res.status(203).send(req.session);
 });
 
-router.get('/login', function(req, res) {
+router.put('/login', function(req, res) {
+  console.log(req.body)
   var db = req.db;
   var collection = db.get('usercollection');
-  if(req.query.changePass == "true") {
-    bcrypt.compare(req.query.oldPass, req.session.usr.pass, function(err, cor) {
+  if(req.body.changePass == "true") {
+    bcrypt.compare(req.body.oldPass, req.session.usr.pass, function(err, cor) {
       if(cor) {
-        bcrypt.hash(req.query.newPass, saltRounds, function(err, hash) {
+        bcrypt.hash(req.body.newPass, saltRounds, function(err, hash) {
           if(err) res.send("There was an error while hashing: " + err);
           else {
               collection.update({ _id: req.session.usr._id }, {$set: { pass: hash, changePass: false }});
@@ -68,11 +69,11 @@ router.get('/login', function(req, res) {
     });
   }
   else {
-  collection.findOne({ loginId: req.query.id },{},function(e,docs){
+  collection.findOne({ loginId: req.body.id },{},function(e,docs){
     if(e) {
       res.send(e);
     }
-    bcrypt.compare(req.query.pass, docs.pass, function(err, cor) {
+    bcrypt.compare(req.body.pass, docs.pass, function(err, cor) {
       if(cor) {
         res.status(200);
         req.session.loggedIn = true;
@@ -88,25 +89,25 @@ router.get('/login', function(req, res) {
 }
 });
 
-router.get('/logout', function(req, res) {
+router.put('/logout', function(req, res) {
   req.session.loggedIn = false;
   res.send(200);
 });
 
-router.get('/createUser', function(req, res) {
+router.post('/createUser', function(req, res) {
   if(req.session.loggedIn && req.session.usr.role == "admin") {
     var db = req.db;
     var collection = db.get('usercollection');
-    bcrypt.hash(req.query.pass, saltRounds, function(err, hash) {
+    bcrypt.hash(req.body.pass, saltRounds, function(err, hash) {
       if(err) res.send("There was an error while hashing: " + err);
       else {
         collection.insert({
-            name: req.query.name, 
-            role: req.query.role, 
+            name: req.body.name, 
+            role: req.body.role, 
             pass: hash, 
             changePass: true, 
-            eventRequirements: req.query.eventRequirements,
-            loginId: req.query.loginId, 
+            eventRequirements: req.body.eventRequirements,
+            loginId: req.body.loginId, 
             verifiedEvents: JSON.stringify(new Array), 
             events: JSON.stringify(new Array), 
             reservedEvents: JSON.stringify(new Array)
@@ -121,26 +122,26 @@ router.get('/createUser', function(req, res) {
   else res.send(403);
 });
 
-router.get('/generateGroup', function(req, res) {
+router.post('/generateGroup', function(req, res) {
   if(req.session.loggedIn && req.session.usr.role == "admin") {
-    console.log(req.query);
+    console.log(req.body);
     var db = req.db;
     var collection = db.get('usercollection');
-    req.query.names = JSON.parse(req.query.names);
+    req.body.names = JSON.parse(req.body.names);
     var profileCache = new Array();
-    req.query.names.forEach(function(name, index){
+    req.body.names.forEach(function(name, index){
       var pass = makeid();
       var settings = db.get("globalsettings")
       settings.findOne({}, function(e,docs2){
         if(e) console.log(e)
-        var eventRequirements = docs2.settings.eventRequirements[req.query.role]
+        var eventRequirements = docs2.settings.eventRequirements[req.body.role]
         bcrypt.hash(pass, saltRounds, function(err, hash) {
           if(err) res.send("There was an error while hashing: " + err);
           else {
             collection.insert({
                 name: name, 
-                role: req.query.role, 
-                groupId: req.query.groupName, 
+                role: req.body.role, 
+                groupId: req.body.groupName, 
                 pass: hash, changePass: true, 
                 eventRequirements: eventRequirements, 
                 loginId: name.replace(" ", "."), 
@@ -154,7 +155,7 @@ router.get('/generateGroup', function(req, res) {
                   pass: pass, 
                   loginId: name.replace(" ", ".")
                 });
-                if(profileCache.length == req.query.names.length) 
+                if(profileCache.length == req.body.names.length) 
                   res.send(JSON.stringify(profileCache));
               }
             );
@@ -165,11 +166,11 @@ router.get('/generateGroup', function(req, res) {
   }
 });
 
-router.get('/deleteUser', function(req, res) {
-  if(req.session.loggedIn && req.session.usr.role == "admin" && req.query != "") {
+router.delete('/deleteUser', function(req, res) {
+  if(req.session.loggedIn && req.session.usr.role == "admin" && req.body != "") {
     var db = req.db;
     var collection = db.get('usercollection');
-    collection.remove({_id: ObjectId(req.query.id)}, {}, function(e, docs){
+    collection.remove({_id: ObjectId(req.body.id)}, {}, function(e, docs){
       res.send("OK");
     });
   }
@@ -568,11 +569,11 @@ router.get('/getSettings', function(req, res) {
   else res.send(403);
 })
 
-router.get('/changeSettings', function(req, res) {
-  if(req.session.loggedIn && req.session.usr.role == "admin" && req.query != "") {
+router.put('/changeSettings', function(req, res) {
+  if(req.session.loggedIn && req.session.usr.role == "admin" && req.body != "") {
     var db = req.db;
     var collection = db.get('globalsettings');
-    collection.update({}, {$set: { settings: JSON.parse(req.query.settings) }});
+    collection.update({}, {$set: { settings: JSON.parse(req.body.settings) }});
     res.send("OK");
   }
   else res.send(403);

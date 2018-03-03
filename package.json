@@ -7,7 +7,7 @@
     "dev": "NODE_ENV=dev node ./bin/www"
   },
   "dependencies": {
-    "body-parser": "~1.15.2",
+    "body-parser": "^1.15.2",
     "cookie-parser": "~1.4.3",
     "crypto": "0.0.3",
     "debug": "~2.2.0",

@@ -7,6 +7,9 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var session = require('express-session');
 
+const swaggerUi = require('swagger-ui-express'); //SwaggerUI middleware load
+const swaggerDocument = require('./prophet-api_v0.1.0.json');
+
 var monk = require('monk');
 var db = monk('DEVELOPMENT:DEVELOPMENT@localhost:27017/prophet'); //Mongo password is changed here!
 
@@ -47,6 +50,8 @@ app.use(function(req, res, next) { //CORS support
     return next();
   }
 });
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

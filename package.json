@@ -15,6 +15,7 @@
     "jade": "~1.11.0",
     "monk": "^4.0.0",
     "morgan": "~1.7.0",
-    "serve-favicon": "~2.3.0"
+    "serve-favicon": "~2.3.0",
+    "swagger-ui-express": "^2.0.15"
   }
 }

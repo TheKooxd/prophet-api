@@ -1,0 +1,748 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "0.1.0",
+    "title": "Prophet",
+    "license": {
+      "name": "Under consideration"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:3000/"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Pings the server",
+        "operationId": "/",
+        "tags": [
+          "Utility"
+        ],
+        "responses": {
+          "200": {
+            "description": "Server is working properly"
+          }
+        }
+      }
+    },
+    "/info": {
+      "get": {
+        "summary": "Returns current session data",
+        "operationId": "info",
+        "tags": [
+          "Utility"
+        ],
+        "responses": {
+          "200": {
+            "description": "An object containing session information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoggedInSession"
+                }
+              }
+            }
+          },
+          "203": {
+            "description": "An object containing session information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Empty response. When user fetched from database didn't match with user requesting the info.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/login": {
+      "put": {
+        "summary": "Logs users in",
+        "operationId": "login",
+        "tags": [
+          "Utility"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "pass": {
+                    "type": "string",
+                    "format": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "An object containing session information. Login succesfull.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoggedInSession"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Credentials were incorrect"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "put": {
+        "summary": "Logs users off",
+        "operationId": "logout",
+        "tags": [
+          "Utility"
+        ],
+        "responses": {
+          "200": {
+            "description": "User session was removed succesfully."
+          }
+        }
+      }
+    },
+    "/changeSettings": {
+      "put": {
+        "summary": "Changes global system settings",
+        "operationId": "changeSettings",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "tags": [
+          "Utility"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Settings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User session was removed succesfully."
+          }
+        }
+      }
+    },
+    "/getSettings": {
+      "get": {
+        "summary": "Gets the current global settings object from mongoDB",
+        "operationId": "getSettings",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "tags": [
+          "Utility"
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings object returned succesfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dbSearch": {
+      "get": {
+        "summary": "Searches the whole database with users own permission level (role)",
+        "operationId": "dbSearch",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "tags": [
+          "Utility"
+        ],
+        "parameters": [
+          {
+            "name": "onlyMeta",
+            "in": "query",
+            "required": false,
+            "description": "Decides if the result array should include only metadata or all information",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "term",
+            "in": "query",
+            "required": true,
+            "description": "Search term",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array depending on did the search hit users or events."
+          },
+          "403": {
+            "description": "Credentials were incorrect"
+          }
+        }
+      }
+    },
+    "/getUser": {
+      "get": {
+        "summary": "Returns user object for one specific user",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "operationId": "getUser",
+        "tags": [
+          "UMS (User managment system)"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "ID for the user you want to receive. This needs to be the mongoDB user ID (e.g. _id), not loginId!",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An user object. Content depends on requestors role.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Your cookie didn't corepond with any logged in sessions."
+          }
+        }
+      }
+    },
+    "/getUsers": {
+      "get": {
+        "summary": "Returns array of user objects (ADMIN ONLY)",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "operationId": "getUsers",
+        "tags": [
+          "UMS (User managment system)"
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of user objects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User wasn't logged in or didn't have admin role."
+          }
+        }
+      }
+    },
+    "/createUser": {
+      "post": {
+        "summary": "Used to create one user. Deprecated, use /generateGroup instead! (ADMIN ONLY)",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "pass": {
+                    "type": "string"
+                  },
+                  "eventRequirements": {
+                    "type": "object"
+                  },
+                  "loginId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "example": {
+                "name": "Admin User",
+                "role": "admin",
+                "pass": "pikkukissa123",
+                "eventRequirements": "undefined",
+                "loginId": "Admin.User"
+              }
+            }
+          }
+        },
+        "tags": [
+          "UMS (User managment system)"
+        ],
+        "responses": {
+          "200": {
+            "description": "User was created succesfully"
+          },
+          "403": {
+            "description": "User wasn't logged in or didn't have admin role."
+          }
+        }
+      }
+    },
+    "/generateGroup": {
+      "post": {
+        "summary": "Creates multiple users at once and assigns same role and groupID (ADMIN ONLY)",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "operationId": "generateGroup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "names": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "groupName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "UMS (User managment system)"
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of created user with pseudo-random passwords.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "pass": {
+                        "type": "string"
+                      },
+                      "loginId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "User wasn't logged in or didn't have admin role."
+          }
+        }
+      }
+    },
+    "/deleteUser": {
+      "delete": {
+        "summary": "Deletes one user (ADMIN ONLY)",
+        "security": [
+          {
+            "APIKEY": []
+          }
+        ],
+        "operationId": "deleteUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "UMS (User managment system)"
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted succesfully"
+          },
+          "403": {
+            "description": "User wasn't logged in or didn't have admin role."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "APIKEY": {
+        "type": "apiKey",
+        "in": "query",
+        "name": "apikey"
+      }
+    },
+    "schemas": {
+      "LoggedInSession": {
+        "properties": {
+          "cookie": {
+            "type": "object",
+            "properties": {
+              "originalMaxAge": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  null
+                ]
+              },
+              "expires": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  null
+                ]
+              },
+              "httpOnly": {
+                "type": "boolean",
+                "enum": [
+                  true,
+                  false
+                ]
+              },
+              "path": {
+                "type": "string",
+                "enum": [
+                  "/"
+                ]
+              }
+            }
+          },
+          "loggedIn": {
+            "type": "boolean",
+            "enum": [
+              true,
+              false
+            ]
+          },
+          "usr": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "User": {
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "5a96d09103a4591ef176fbaf",
+            "description": "User's unique ID from mongodb"
+          },
+          "name": {
+            "type": "string",
+            "example": "Firstname Lastname",
+            "description": "User's real name"
+          },
+          "pass": {
+            "type": "string",
+            "description": "Users pass hash"
+          },
+          "changePass": {
+            "type": "boolean",
+            "enum": [
+              true,
+              false
+            ],
+            "description": "Value, that determines if user should be prompted to change password on login. Defaults true to new users."
+          },
+          "eventRequirements": {
+            "type": "object",
+            "properties": {
+              "jumis": {
+                "type": "integer",
+                "example": 1
+              },
+              "innostajat": {
+                "type": "integer",
+                "example": 1
+              },
+              "nuortenilta": {
+                "type": "integer",
+                "example": 1
+              },
+              "festarit": {
+                "type": "integer",
+                "example": 1
+              },
+              "talkoot": {
+                "type": "integer",
+                "example": 1
+              },
+              "other": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          },
+          "role": {
+            "type": "string",
+            "description": "User's role",
+            "enum": [
+              "admin",
+              "EVI",
+              "innostaja"
+            ]
+          },
+          "groupId": {
+            "type": "string",
+            "description": "GroupID, if user is created via group generator"
+          },
+          "loginId": {
+            "type": "string",
+            "description": "String, that user uses to login. Diffrent from _id"
+          },
+          "verifiedEvents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "event": {
+                  "type": "string",
+                  "example": "5a96d09103a4591ef176fbaf"
+                },
+                "verifier": {
+                  "type": "string",
+                  "example": "5a96d09103a4591ef176fbaf"
+                }
+              }
+            },
+            "uniqueItems": true,
+            "description": "Event IDs, that have been verified by admins"
+          },
+          "events": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "example": "5a96d09103a4591ef176fbaf"
+            },
+            "description": "Event IDs, that user is participating"
+          },
+          "reservedEvents": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "example": "5a96d09103a4591ef176fbaf"
+            },
+            "description": "Event IDs, that user is in-line for"
+          }
+        }
+      },
+      "Session": {
+        "properties": {
+          "cookie": {
+            "type": "object",
+            "properties": {
+              "originalMaxAge": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  null
+                ]
+              },
+              "expires": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  null
+                ]
+              },
+              "httpOnly": {
+                "type": "boolean",
+                "enum": [
+                  true,
+                  false
+                ]
+              },
+              "path": {
+                "type": "string",
+                "enum": [
+                  "/"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "Settings": {
+        "properties": {
+          "eventRequirements": {
+            "type": "object",
+            "properties": {
+              "innostaja": {
+                "type": "object",
+                "properties": {
+                  "jumis": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "innostajat": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "nuortenilta": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "festarit": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "talkoot": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "other": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              },
+              "EVI": {
+                "type": "object",
+                "properties": {
+                  "jumis": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "innostajat": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "nuortenilta": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "festarit": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "talkoot": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "other": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              },
+              "admin": {
+                "type": "object",
+                "properties": {
+                  "jumis": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "innostajat": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "nuortenilta": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "festarit": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "talkoot": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "other": {
+                    "type": "integer",
+                    "example": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

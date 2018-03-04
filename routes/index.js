@@ -189,7 +189,6 @@ router.get('/deleteParticipant', function(req, res) {
       else {
         usrCollection.findOne({ _id: req.query.usrId },{},function(e,removedUserData){
           if(e) {
-            console.log(e);
             res.send("That user doesn't exist or the database is down");
           }
           var removeUserEvents = JSON.parse(removedUserData.events);
@@ -204,17 +203,14 @@ router.get('/deleteParticipant', function(req, res) {
             if(reservedParticipantsCache.length > 0) {
               usrCollection.findOne({ _id: reservedParticipantsCache[0] },{},function(e,usrDocs){
                 if(e) {
-                  console.log(e);
                   res.send("That user doesn't exist or the database is down");
                 }
-                console.log(usrDocs);
                 docsCache.push(usrDocs._id);
                 var reservedEventsCache = JSON.parse(usrDocs.reservedEvents);
                 var index2 = reservedEventsCache.indexOf(req.query.id);
                 reservedEventsCache.splice(index2, 1);
                 var eventsCache = JSON.parse(usrDocs.events);
                 eventsCache.push(req.query.id);
-                console.log(reservedParticipantsCache.splice(0,1));
                 collection.update({ _id: req.query.id }, {$set: { participants: JSON.stringify(docsCache) }});
                 collection.update({ _id: req.query.id }, {$set: { reservedParticipants: JSON.stringify(reservedParticipantsCache.splice(0,1)) }});
                 usrCollection.update({ _id: usrDocs._id }, {$set: { reservedEvents: JSON.stringify(reservedEventsCache) }});

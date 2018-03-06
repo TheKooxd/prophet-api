@@ -28,7 +28,7 @@ function encrypt(text){
   crypted += cipher.final('hex');
   return crypted;
 }
-    
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   res.send(200);
@@ -442,14 +442,22 @@ router.get('/getEvents', function(req, res) {
     collection.find({}, function(e,docs){
       var temp = new Array;
       docs.forEach(function(val){
-        if(req.session.usr.role == "EVI" && val.toEVI == "true") {
-          temp.push(val);
-        }
-        else if (req.session.usr.role == "innostaja" && val.toInnostaja == "true") {
-          temp.push(val);
-        }
-        else if (req.session.usr.role == "admin") {
-          temp.push(val);
+        if(req.session.usr.role == "EVI" && val.toEVI == "true"
+        || req.session.usr.role == "innostaja" && val.toInnostaja == "true"
+        || req.session.usr.role == "admin") {
+          if (!val.releaseTime || req.session.usr.role == "admin") { // has no release time
+            temp.push(val);
+            console.log("null");
+          }
+          else { // has a release time
+            console.log(val.releaseTime);
+            var current = new Date();
+            var releaseTime = new Date(val.releaseTime);
+            if(current > releaseTime){
+              temp.push();
+              collection.update({ _id: val._id }, {$set: { releaseTime: null }});
+            }
+          }
         }
       });
       var controlDate = new Date();

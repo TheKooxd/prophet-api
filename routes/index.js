@@ -447,10 +447,8 @@ router.get('/getEvents', function(req, res) {
         || req.session.usr.role == "admin") {
           if (!val.releaseTime || req.session.usr.role == "admin") { // has no release time
             temp.push(val);
-            console.log("null");
           }
           else { // has a release time
-            console.log(val.releaseTime);
             var current = new Date();
             var releaseTime = new Date(val.releaseTime);
             if(current > releaseTime){

@@ -453,7 +453,6 @@ router.get('/getEvents', function(req, res) {
             var releaseTime = new Date(val.releaseTime);
             if(current > releaseTime){
               temp.push();
-              collection.update({ _id: val._id }, {$set: { releaseTime: null }});
             }
           }
         }

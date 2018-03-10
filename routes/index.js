@@ -441,6 +441,7 @@ router.get('/getEvents', function(req, res) {
     var collection = db.get('eventcollection');
     collection.find({}, function(e,docs){
       var temp = new Array;
+      var current = new Date();
       docs.forEach(function(val){
         if(req.session.usr.role == "EVI" && val.toEVI == "true"
         || req.session.usr.role == "innostaja" && val.toInnostaja == "true"
@@ -449,7 +450,6 @@ router.get('/getEvents', function(req, res) {
             temp.push(val);
           }
           else { // has a release time
-            var current = new Date();
             var releaseTime = new Date(val.releaseTime);
             if(current > releaseTime){
               temp.push();

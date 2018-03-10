@@ -633,15 +633,20 @@ router.get('/getEvent', function(req, res) {
     var temp = new Array;
     var collection = db.get('eventcollection');
     collection.find({ _id: req.query.id },{},function(e,docs){
+      var current = new Date();
       docs.forEach(function(val){
-        if(req.session.usr.role == "EVI" && val.toEVI == "true") {
-          temp.push(val);
-        }
-        else if (req.session.usr.role == "innostaja" && val.toInnostaja) {
-          temp.push(val);
-        }
-        else if (req.session.usr.role == "admin") {
-          temp.push(val);
+        if(req.session.usr.role == "EVI" && val.toEVI == "true"
+        || req.session.usr.role == "innostaja" && val.toInnostaja == "true"
+        || req.session.usr.role == "admin") {
+          if (!val.releaseTime || req.session.usr.role == "admin") { // has no release time
+            temp.push(val);
+          }
+          else { // has a release time
+            var releaseTime = new Date(val.releaseTime);
+            if(current > releaseTime){
+              temp.push();
+            }
+          }
         }
       });
       if(temp.length > 0) {
